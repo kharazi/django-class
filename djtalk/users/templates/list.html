@@ -1,0 +1,27 @@
+<html>
+    <title>User List</title>
+    <h1>{{ title }} </h1>
+    <ul>
+        {% for u in users %}
+            {% if u.grade > 0 %}
+            <li>
+                {{ u.get_name }} {{ u.grade }}
+            </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+
+    <form action="/users/add">
+        First name:
+        <br>
+        <input type="text" name="firstname" value="Mickey">
+        <br>
+        Last name:
+        <br>
+        <input type="text" name="lastname" value="Mouse">
+        <br><br>
+        <input type="number" name="grade" min=0 max=20 step=0.1>
+        <br>
+        <input type="submit" value="Add user">
+    </form> 
+</html>
