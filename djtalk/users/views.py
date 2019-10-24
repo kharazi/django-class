@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils.datastructures import MultiValueDictKeyError
 
 
 class Person:
@@ -16,12 +17,30 @@ class Person:
         return "%s %s" % (self.firstname, self.lastname)
 
 
+    def write_in_file(self):
+        f = open('users.txt', 'at')
+        f.write(
+            "%s,%s,%d\n" % (
+                self.firstname,
+                self.lastname,
+                self.grade
+            )
+        )
+        f.close()
 
-ali = Person('Ali', 'Alavi', 10)
-sara = Person('Sara', 'Saravi', 20)
-users = [
-    ali, sara
-]
+
+users = []
+f = open('users.txt', 'rt')
+for l in f:
+
+    userdata = l.split(',')
+    p = Person(
+        userdata[0],
+        userdata[1],
+        int(userdata[2])
+    )
+    users.append(p)
+f.close()
 
 
 def index(request):
@@ -51,20 +70,46 @@ def validate_user_add_request(data):
         int(data['grade'])
     except ValueError:
         return False, 'Grade must be an int', 'grade'
+    except MultiValueDictKeyError:
+        return False, 'Grade must not empty', 'grade'
+ 
     return True, ''
 
 
 def user_list(request):
-    if 'firstname' in request.GET:
-        validate = validate_user_add_request(request.GET)
-        if validate[0] == True:
+    print(request.headers)
+    if request.method == 'POST':
+        
+        validate = validate_user_add_request(request.POST)
+        if validate[0]:
             p = Person(
-                request.GET['firstname'],
-                request.GET['lastname'],
-                int(request.GET['grade'])
+                request.POST['firstname'],
+                request.POST['lastname'],
+                int(request.POST['grade'])
             )
             users.append(p)
+            p.write_in_file()
+            return HttpResponse("OK")
         else:
+            return HttpResponse("Error", status=400)
+
+    elif request.method == 'GET':
+        if request.headers['ACCEPT-LANGUAGE'] == 'fa':
+            response = render(
+                request,
+                'list-fa.html',
+                context={
+                    'users': users,
+                    'title': "لیست کاربران",
+                    'test_dict': {
+                        "name": "value"
+                    }
+                }
+            )
+            response['Server'] = 'PHP'
+            return response
+        else:
+            print("users inja", users)
             return render(
                 request,
                 'list.html',
@@ -73,26 +118,13 @@ def user_list(request):
                     'title': "List User ha",
                     'test_dict': {
                         "name": "value"
-                    },
-                    'has_error': True,
-                    'error': validate[1],
-                    'field': validate[2]
+                    }
                 }
             )
-    return render(
-        request,
-        'list.html',
-        context={
-            'users': users,
-            'title': "List User ha",
-            'test_dict': {
-                "name": "value"
-            }
-        }
-    )
 
 
 def user_add(request):
+   
     print(request.GET)
     p = Person(
         request.GET['firstname'],

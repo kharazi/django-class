@@ -1,5 +1,5 @@
 <html>
-    <title>User List</title>
+    <title>لیست کاربران</title>
     <h1>{{ title }} </h1>
     <ul>
         {% for u in users %}
@@ -15,8 +15,8 @@
             {{ field }}: {{ error }}
         </p>
     {% endif %}
-    <form action="" method="POST">
-        First name:
+    <form action="">
+        نام:
         <br>
         {% if field == 'firstname' %}
             <input type="text" name="firstname" value="Mickey" style="border-color:red">
@@ -25,7 +25,7 @@
         {% endif %}
         
         <br>
-        Last name:
+        نام خانوادگی:
         <br>
         <input type="text" name="lastname" value="Mouse">
         <br><br>
