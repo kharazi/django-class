@@ -3,11 +3,10 @@
     <h1>{{ title }} </h1>
     <ul>
         {% for u in users %}
-            {% if u.grade > 0 %}
             <li>
-                {{ u.get_name }} {{ u.grade }}
+                {{ u.first_name }} {{ u.last_name }} 
             </li>
-            {% endif %}
+            
         {% endfor %}
     </ul>
     {% if has_error %}
@@ -18,18 +17,16 @@
     <form action="" method="POST">
         First name:
         <br>
-        {% if field == 'firstname' %}
-            <input type="text" name="firstname" value="Mickey" style="border-color:red">
-        {% else %}
-            <input type="text" name="firstname" value="Mickey" >
-        {% endif %}
-        
+     
+        <input type="text" name="firstname" value="Mickey" >    
         <br>
         Last name:
         <br>
         <input type="text" name="lastname" value="Mouse">
         <br><br>
-        <input type="text" name="grade" min=0 max=20 step=0.1>
+        Username:
+        <br>
+        <input type="text" name="username" value="Mouse">
         <br>
         <input type="submit" value="Add user">
     </form> 

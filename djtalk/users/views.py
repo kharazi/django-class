@@ -1,126 +1,83 @@
+import uuid
+
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils.datastructures import MultiValueDictKeyError
+from users.models import Users
 
 
-class Person:
 
-    def __init__(self, firstname, lastname, grade=0):
-        self.firstname = firstname
-        self.lastname = lastname
-        self.grade = grade
+def login(request):
+    if request.method == 'GET':
+        return render(
+            request,
+            'login.html',
+            context={
 
-    def get_name(self):
-        return "%s %s" % (self.firstname, self.lastname)
-
-    def __str__(self):
-        return "%s %s" % (self.firstname, self.lastname)
-
-
-    def write_in_file(self):
-        f = open('users.txt', 'at')
-        f.write(
-            "%s,%s,%d\n" % (
-                self.firstname,
-                self.lastname,
-                self.grade
-            )
+            }
         )
-        f.close()
-
-
-users = []
-f = open('users.txt', 'rt')
-for l in f:
-
-    userdata = l.split(',')
-    p = Person(
-        userdata[0],
-        userdata[1],
-        int(userdata[2])
-    )
-    users.append(p)
-f.close()
-
+    elif request.method == 'POST':
+        print(request.POST['username'], request.POST['password'])
+        u = Users.objects.filter(
+            username=request.POST['username'],
+            password=request.POST['password']
+        )
+        if u:
+            u[0].token = uuid.uuid4()
+            u[0].save()
+            print('sdfsdf', u[0].token)
+            return redirect(
+                '/chat/'
+            )
+        else:
+            return HttpResponse("Not found", status=404)
 
 def index(request):
     return HttpResponse("<html><title>Salam</title><h1>Salam</h1></html>")
 
 
-# def user_list(request):
-#     user_list_string = ""
-#     for u in users:
-#         user_list_string += "<li>%s %d</li>" % (u.get_name(), u.grade)
-
-#     print(user_list_string)
-#     output = """
-#         <html>
-#             <title>User List</title>
-#             <h1>User List</h1>
-#             <ul>
-#                 %s
-#             </ul>
-#         </html>
-#     """ % user_list_string
-#     return HttpResponse(output)
 def validate_user_add_request(data):
-    if len(data['firstname']) < 3:
+    if len(data['firstname']) < 2:
         return False, 'Your firstname must be greater than 3 chars', 'firstname'
-    try:
-        int(data['grade'])
-    except ValueError:
-        return False, 'Grade must be an int', 'grade'
-    except MultiValueDictKeyError:
-        return False, 'Grade must not empty', 'grade'
  
     return True, ''
 
 
 def user_list(request):
-    print(request.headers)
     if request.method == 'POST':
-        
         validate = validate_user_add_request(request.POST)
         if validate[0]:
-            p = Person(
-                request.POST['firstname'],
-                request.POST['lastname'],
-                int(request.POST['grade'])
+            u = Users(
+                first_name=request.POST['firstname'],
+                last_name=request.POST['lastname'],
+                username=request.POST['username'],
+                password='1321',
+                avatar='123qwe'
             )
-            users.append(p)
-            p.write_in_file()
+            try:
+                u.save()
+            except:
+                return HttpResponse(
+                    "Duplicate",
+                    status=400
+                )
             return HttpResponse("OK")
         else:
             return HttpResponse("Error", status=400)
 
     elif request.method == 'GET':
-        if request.headers['ACCEPT-LANGUAGE'] == 'fa':
-            response = render(
-                request,
-                'list-fa.html',
-                context={
-                    'users': users,
-                    'title': "لیست کاربران",
-                    'test_dict': {
-                        "name": "value"
-                    }
+        users = Users.objects.all()
+        return render(
+            request,
+            'list.html',
+            context={
+                'users': users,
+                'title': "List User ha",
+                'test_dict': {
+                    "name": "value"
                 }
-            )
-            response['Server'] = 'PHP'
-            return response
-        else:
-            print("users inja", users)
-            return render(
-                request,
-                'list.html',
-                context={
-                    'users': users,
-                    'title': "List User ha",
-                    'test_dict': {
-                        "name": "value"
-                    }
-                }
-            )
+            }
+        )
 
 
 def user_add(request):
