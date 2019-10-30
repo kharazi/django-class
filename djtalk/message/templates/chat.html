@@ -30,13 +30,7 @@
             <ul>
                 {% for message in messages %}
                 <li>
-                    {% for id, name in users_names.items %}
-                        {% if message.sender == id %}
-                            {{ name }}: {{ message.text }}
-                        {% endif %}
-
-                    {% endfor %}
-                    
+                    {{ message.sender.get_full_name }} ( {{ message.sender.username }} ): {{ message.text }}
                 </li>
                 {% endfor %}
             </ul>

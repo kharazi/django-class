@@ -39,52 +39,56 @@ def add_message(request):
 
 
 def chat(request, user_id=None):
-    print('user_id', user_id)
-    second = user_id
-    if 'token' in request.COOKIES:
-        token = request.COOKIES['token']
+    if user_id:
+        second = user_id
+        if 'token' in request.COOKIES:
+            token = request.COOKIES['token']
 
-        try:
-            u = Users.objects.get(token=token)
-            self_ = u.id
-            messages = Messages.objects.filter(
-                Q(
-                    sender=self_, receiver=second
-                ) | Q(
-                    sender=second, receiver=self_
+            try:
+                u = Users.objects.get(token=token)
+                self_ = u.id
+                messages = Messages.objects.filter(
+                    Q(
+                        sender=self_, receiver=second
+                    ) | Q(
+                        sender=second, receiver=self_
+                    )
                 )
-            )
-            second_user = Users.objects.get(
-                id=user_id
-            )
-            
-        except ObjectDoesNotExist:
-            return HttpResponse(
-                "Unauthorized! invalid token. Go to login page",
-                status=401
-            )
-        except MultipleObjectsReturned:
-            return HttpResponse(
-                "Unauthorized! duplicate token. Go to login page",
-                status=401
-            )
+                second_user = Users.objects.get(
+                    id=user_id
+                )
+                
+            except ObjectDoesNotExist:
+                return HttpResponse(
+                    "Unauthorized! invalid token. Go to login page",
+                    status=401
+                )
+            except MultipleObjectsReturned:
+                return HttpResponse(
+                    "Unauthorized! duplicate token. Go to login page",
+                    status=401
+                )
 
-            
+                
 
-    users_names = {
-        u.id: u.get_full_name(),
-        second_user.id: second_user.get_full_name()
-    }
-    print(users_names)
-    return render(
-        request,
-        'chat.html',
-        context={
-            'users': Users.objects.all(),
-            'receiver': user_id,
-            'messages': messages,
-            'self_id': u.id,
-            'users_names': users_names
-
-        }
-    )
+        return render(
+            request,
+            'chat.html',
+            context={
+                'users': Users.objects.all(),
+                'receiver': user_id,
+                'messages': messages,
+                'self_id': u.id,
+            }
+        )
+    else:
+        return render(
+            request,
+            'chat.html',
+            context={
+                'users': Users.objects.all(),
+                'receiver': user_id,
+                'messages': [],
+                'self_id': '',
+            }
+        )
