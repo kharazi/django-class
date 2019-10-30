@@ -12,25 +12,46 @@
             <ul>
                 {% for u in users %}
                 <li>
-                    <a href="/chat/{{ u.id }}">{{ u.get_full_name }}</a>
+                    <a href="/chat/{{ u.id }}">
+                        {% if u.id == self_id %}
+                            Saved Messages (Khodet)
+                        {% else %}
+                            {{ u.get_full_name }}
+                        {% endif %}
+                    </a>
                 </li>
                 {% endfor %}
             </ul>
         </div>
         <div>
             <h2>
-                Message List
+                Messages:
             </h2>
-            <div>
-                <form method="POST" action="/chat/message/new">
-                    <textarea name="text" rows=3 cols=100>
-                    </textarea>
-                    <input type="hidden" name="receiver" value="{{ receiver }}">
-                    <input type="submit" value="Send Message" />
-                        
+            <ul>
+                {% for message in messages %}
+                <li>
+                    {% for id, name in users_names.items %}
+                        {% if message.sender == id %}
+                            {{ name }}: {{ message.text }}
+                        {% endif %}
+
+                    {% endfor %}
                     
-                </form>
-            </div>
+                </li>
+                {% endfor %}
+            </ul>
+
         </div>
+        <hr/>
+        <div>
+            
+            <form method="POST" action="/chat/message/new">
+                <textarea name="text" rows=3 cols=100>
+                </textarea>
+                <input type="hidden" name="receiver" value="{{ receiver }}">
+                <input type="submit" value="Send Message" />
+            </form>
+        </div>
+
     </body>
 </html>

@@ -22,13 +22,16 @@ def login(request):
             username=request.POST['username'],
             password=request.POST['password']
         )
+        print(type(u), u)
         if u:
             u[0].token = uuid.uuid4()
             u[0].save()
             print('sdfsdf', u[0].token)
-            return redirect(
+            response = redirect(
                 '/chat/'
             )
+            response.set_cookie('token', u[0].token)
+            return response
         else:
             return HttpResponse("Not found", status=404)
 

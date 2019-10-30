@@ -10,7 +10,7 @@ class Users(models.Model):
     password = models.CharField(max_length=1000)
     avatar = models.CharField(max_length=100)
     active = models.BooleanField(default=True)
-    token = models.UUIDField(null=True)
+    token = models.UUIDField(null=True, unique=True)
 
 
     def get_full_name(self):
@@ -19,7 +19,13 @@ class Users(models.Model):
 
 class Messages(models.Model):
     text = models.TextField()
-    sender = models.IntegerField()
-    receiver = models.IntegerField()
+    sender = models.ForeignKey(
+        Users,
+        on_delete=models.CASCADE,
+        related_name='senders')
+    receiver = models.ForeignKey(
+        Users,
+        on_delete=models.CASCADE,
+        related_name='receivers')
     date = models.DateTimeField(auto_now_add=True)
     status = models.IntegerField(default=1) # 1: send 2: receive 3: seen
