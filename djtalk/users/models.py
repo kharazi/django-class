@@ -17,15 +17,3 @@ class Users(models.Model):
         return self.first_name + ' ' + self.last_name
 
 
-class Messages(models.Model):
-    text = models.TextField()
-    sender = models.ForeignKey(
-        Users,
-        on_delete=models.CASCADE,
-        related_name='senders')
-    receiver = models.ForeignKey(
-        Users,
-        on_delete=models.CASCADE,
-        related_name='receivers')
-    date = models.DateTimeField(auto_now_add=True)
-    status = models.IntegerField(default=1) # 1: send 2: receive 3: seen

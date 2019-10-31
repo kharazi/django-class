@@ -7,17 +7,13 @@
     <body>
         <div>
             <h2>
-                User List
+                Conversation List
             </h2>
             <ul>
-                {% for u in users %}
+                {% for uc in user_conversations %}
                 <li>
-                    <a href="/chat/{{ u.id }}">
-                        {% if u.id == self_id %}
-                            Saved Messages (Khodet)
-                        {% else %}
-                            {{ u.get_full_name }}
-                        {% endif %}
+                    <a href="/chat/{{ uc.conversation.id }}">
+                        {{ uc.conversation.name }}
                     </a>
                 </li>
                 {% endfor %}
@@ -42,7 +38,7 @@
             <form method="POST" action="/chat/message/new">
                 <textarea name="text" rows=3 cols=100>
                 </textarea>
-                <input type="hidden" name="receiver" value="{{ receiver }}">
+                <input type="hidden" name="c_id" value="{{ conversation_id }}">
                 <input type="submit" value="Send Message" />
             </form>
         </div>
