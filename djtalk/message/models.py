@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import Users
+from django.contrib.auth.models import User
 # Create your models here.
 
 
@@ -13,7 +13,7 @@ class ConversationMembers(models.Model):
         Conversation,
         on_delete=models.CASCADE)
     user = models.ForeignKey(
-        Users,
+        User,
         on_delete=models.CASCADE
     )
     is_admin = models.BooleanField(
@@ -24,7 +24,7 @@ class ConversationMembers(models.Model):
 class Messages(models.Model):
     text = models.TextField()
     sender = models.ForeignKey(
-        Users,
+        User,
         on_delete=models.CASCADE
     )
     conversation = models.ForeignKey(

@@ -1,10 +1,11 @@
 from django.shortcuts import render
-from users.models import Users
+from django.contrib.auth.models import User
 from message.models import Conversation, ConversationMembers
 from django.http import HttpResponse
 from message.models import Messages
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.shortcuts import render, redirect
 
 
 
@@ -14,7 +15,7 @@ def add_message(request):
     if 'token' in request.COOKIES:
         token = request.COOKIES['token']
         try:
-            u = Users.objects.get(token=token)
+            u = User.objects.get(token=token)
             c = Conversation.objects.get(
                 id=request.POST['c_id']
             )
@@ -43,24 +44,18 @@ def add_message(request):
 
 
 def chat(request, conversation_id=None):
-    if 'token' in request.COOKIES:
-        token = request.COOKIES['token']
-        try:
-            u = Users.objects.get(token=token)
-        except ObjectDoesNotExist:
-            return HttpResponse(
-                "Unauthorized! invalid token. Go to login page",
-                status=401
-            )
-        except MultipleObjectsReturned:
-            return HttpResponse(
-                "Unauthorized! duplicate token. Go to login page",
-                status=401
-            )
-    cm_of_u = ConversationMembers.objects.filter(
-        user=u
-    )
+    print(request.user, type(request.user))
 
+    if request.user.is_authenticated:
+        cm_of_u = ConversationMembers.objects.filter(
+            user=request.user
+        )
+    else:
+        return redirect(
+            '/users/login'
+        )
+
+    messages = []
     if conversation_id:
         c = Conversation.objects.get(
             id=conversation_id
@@ -68,21 +63,12 @@ def chat(request, conversation_id=None):
         messages = Messages.objects.filter(
             conversation=c
         )
-        return render(
-            request,
-            'chat.html',
-            context={
-                'user_conversations': cm_of_u,
-                'conversation_id': conversation_id,
-                'messages': messages,
-            }
-        )
-    else:
-        return render(
-            request,
-            'chat.html',
-            context={
-                'user_conversations': cm_of_u,
-                'messages': [],
-            }
-        )
+    return render(
+        request,
+        'chat.html',
+        context={
+            'user_conversations': cm_of_u,
+            'conversation_id': conversation_id,
+            'messages': messages,
+        }
+    )

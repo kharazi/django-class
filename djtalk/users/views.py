@@ -1,13 +1,13 @@
 import uuid
 
+from django.contrib.auth import authenticate, login 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils.datastructures import MultiValueDictKeyError
-from users.models import Users
+from django.contrib.auth.models import User
 
 
-
-def login(request):
+def login_view(request):
     if request.method == 'GET':
         return render(
             request,
@@ -17,20 +17,17 @@ def login(request):
             }
         )
     elif request.method == 'POST':
-        print(request.POST['username'], request.POST['password'])
-        u = Users.objects.filter(
+
+        user = authenticate(
+            request,
             username=request.POST['username'],
             password=request.POST['password']
         )
-        print(type(u), u)
-        if u:
-            u[0].token = uuid.uuid4()
-            u[0].save()
-            print('sdfsdf', u[0].token)
+        if user is not None:
+            login(request, user)
             response = redirect(
                 '/chat/'
             )
-            response.set_cookie('token', u[0].token)
             return response
         else:
             return HttpResponse("Not found", status=404)
@@ -50,7 +47,7 @@ def user_list(request):
     if request.method == 'POST':
         validate = validate_user_add_request(request.POST)
         if validate[0]:
-            u = Users(
+            u = User(
                 first_name=request.POST['firstname'],
                 last_name=request.POST['lastname'],
                 username=request.POST['username'],
@@ -69,7 +66,7 @@ def user_list(request):
             return HttpResponse("Error", status=400)
 
     elif request.method == 'GET':
-        users = Users.objects.all()
+        users = User.objects.all()
         return render(
             request,
             'list.html',
@@ -83,15 +80,4 @@ def user_list(request):
         )
 
 
-def user_add(request):
-   
-    print(request.GET)
-    p = Person(
-        request.GET['firstname'],
-        request.GET['lastname'],
-        int(request.GET['grade'])
-    )
-    users.append(p)
-    print(p)
 
-    return HttpResponse("Ok! saved!")
