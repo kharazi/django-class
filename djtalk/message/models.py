@@ -8,6 +8,9 @@ class Conversation(models.Model):
     is_group = models.BooleanField(default=False)
 
 
+    def __str__(self):
+        return self.name
+
 class ConversationMembers(models.Model):
     conversation = models.ForeignKey(
         Conversation,
@@ -33,3 +36,6 @@ class Messages(models.Model):
     )
     date = models.DateTimeField(auto_now_add=True)
     status = models.IntegerField(default=1) # 1: send 2: receive 3: seen
+
+    def __str__(self):
+        return self.text
