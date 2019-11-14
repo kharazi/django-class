@@ -6,22 +6,12 @@ from django.contrib.auth.models import User
 class Conversation(models.Model):
     name = models.CharField(max_length=50)
     is_group = models.BooleanField(default=False)
+    members = models.ManyToManyField(User)
 
 
     def __str__(self):
         return self.name
 
-class ConversationMembers(models.Model):
-    conversation = models.ForeignKey(
-        Conversation,
-        on_delete=models.CASCADE)
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE
-    )
-    is_admin = models.BooleanField(
-        default=False
-    )
 
 
 class Messages(models.Model):

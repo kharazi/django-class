@@ -1,74 +1,92 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from message.models import Conversation, ConversationMembers
+from message.models import Conversation
 from django.http import HttpResponse
 from message.models import Messages
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.shortcuts import render, redirect
-
+from django.http import JsonResponse
 
 
 def add_message(request):
-    print(request.COOKIES, type(request.COOKIES))
-    print('inja', request.POST)
-    if 'token' in request.COOKIES:
-        token = request.COOKIES['token']
-        try:
-            u = User.objects.get(token=token)
-            c = Conversation.objects.get(
-                id=request.POST['c_id']
-            )
-            m = Messages(
-                text=request.POST['text'],
-                sender=u,
-                conversation=c
-            )
-            m.save()
-            return HttpResponse("Message Saved!")
-        except ObjectDoesNotExist:
-            return HttpResponse(
-                "Unauthorized! invalid token. Go to login page",
-                status=401
-            )
-        except MultipleObjectsReturned:
-            return HttpResponse(
-                "Unauthorized! duplicate token. Go to login page",
-                status=401
-            )
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'message': 'Send login request'
+        })
     else:
-        return HttpResponse(
-            "Unauthorized! Go to login page",
-            status=401
-        )
-
-
-def chat(request, conversation_id=None):
-    print(request.user, type(request.user))
-
-    if request.user.is_authenticated:
-        cm_of_u = ConversationMembers.objects.filter(
-            user=request.user
-        )
-    else:
-        return redirect(
-            '/users/login'
-        )
-
-    messages = []
-    if conversation_id:
-        c = Conversation.objects.get(
-            id=conversation_id
-        )
-        messages = Messages.objects.filter(
+        c = Conversation.objects.get(id=request.POST['conversation'])
+        m = Messages(
+            text=request.POST['text'],
+            sender=request.user,
             conversation=c
         )
-    return render(
-        request,
-        'chat.html',
-        context={
-            'user_conversations': cm_of_u,
-            'conversation_id': conversation_id,
-            'messages': messages,
+        m.save()
+        r = {
+            'message': 'Your message saved!'
         }
+        return JsonResponse(r)
+
+
+def message_list(request):
+    if request.method != 'GET':
+        return JsonResponse({
+            'message': 'Method not allowed!'
+        }, status=405)
+    if 'conversation' not in request.GET:
+        return JsonResponse({
+            'message': 'please send conversation id'
+        }, status=400)
+    c = Conversation.objects.get(
+        id=request.GET['conversation']
     )
+    messages = Messages.objects.filter(
+        conversation=c
+    )
+    messages_list = []
+    for m in messages:
+        messages_list.append(
+            {
+                'text': m.text,
+                'sender': {
+                    'first_name': m.sender.first_name,
+                    'last_name': m.sender.last_name,
+                    'id': m.sender.id
+                },
+                'date': m.date,
+            }
+        )
+
+    d = {
+        'messages': messages_list
+    }
+    return JsonResponse(d)
+
+
+
+def conversation_list(request):
+    conversations = []
+    for c in Conversation.objects.all():
+        members = []
+        for m in c.members.all():
+
+            members.append(
+                {
+                    'id': m.id,
+                    'firstname': m.first_name,
+                    'lastname': m.last_name
+                }
+            )
+        conversations.append(
+            {
+                'id': c.id,
+                'name': c.name,
+                'is_group': c.is_group,
+                'members': members
+            }
+        )
+
+    return JsonResponse({
+        'conversations': conversations
+    })
+ 
