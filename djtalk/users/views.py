@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.utils.datastructures import MultiValueDictKeyError
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-
+from rest_framework import serializers
 
 def login_view(request):
 
@@ -25,6 +25,22 @@ def login_view(request):
         }, status=404)
     
 
+# class UserSerializer(serializers.Serializer):
+#     id = serializers.IntegerField()
+#     first_name = serializers.CharField()
+#     last_name = serializers.CharField()
+#     school_name = serializers.CharField()
+
+class UserSerializer(serializers.ModelSerializer):
+
+    name = serializers.SerializerMethodField()
+
+    def get_name(self, obj):
+        return obj.get_full_name()
+
+    class Meta:
+        model = User
+        exclude = ['password', 'last_login', 'first_name', 'last_name']
 
 
 def user_list(request):
@@ -32,18 +48,28 @@ def user_list(request):
 
     dict_users = []
 
-    for u in users:
-        dict_users.append(
-            {
-                'first_name': u.first_name,
-                'last_name': u.last_name,
-                'id': u.id
-            }
-        )
+    s = UserSerializer(users, many=True)
+    print(s.data)
+
+    # for u in users:
+    #     s = UserSerializer(u)
+    #     dict_users.append(s.data)
+
     r = {
-        'users': dict_users
+        'users': s.data
     }
     return JsonResponse(r)
 
-  
 
+    #     dict_users.append(
+    #         {
+    #             'first_name': u.first_name,
+    #             'last_name': u.last_name,
+    #             'id': u.id,
+                # ''
+    #         }
+    #     )
+    # r = {
+    #     'users': dict_users
+    # }
+    # return JsonResponse(r)
