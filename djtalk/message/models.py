@@ -26,6 +26,8 @@ class Messages(models.Model):
     )
     date = models.DateTimeField(auto_now_add=True)
     status = models.IntegerField(default=1) # 1: send 2: receive 3: seen
+    image = models.ImageField(
+        upload_to="media", null=True, blank=True)
 
     def __str__(self):
         return self.text

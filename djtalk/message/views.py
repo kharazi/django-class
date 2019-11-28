@@ -10,54 +10,107 @@ from django.http import JsonResponse
 from rest_framework import serializers
 
 from users.views import UserSerializer
+from message.serializers import UpdateMessageSerializer, MessageSerializer, RequestGetMessageSerializer, ConversationSerializer, AddMessageSerializer
+from rest_framework import status
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.utils.decorators import method_decorator
 
 
-class AddMessageSerializer(serializers.Serializer):
-    conversation = serializers.IntegerField()
-    text = serializers.CharField(max_length=100, allow_blank=False)
+class MessageView(APIView):
 
-
-def add_message(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({
-            'message': 'Send login request'
-        })
-    else:
-        # if 'conversation' not in request.POST:
-        #     return JsonResponse({
-        #         'message': 'Bad request'
-        #     }, status=400)
-        # if 'text' not in request.POST:
-        #     return JsonResponse({
-        #         'message': 'Bad request'
-        #     }, status=400)
-        s = AddMessageSerializer(data=request.POST)
+    def get(self, request):
+        s = RequestGetMessageSerializer(data=request.GET)
         if s.is_valid():
-            c = Conversation.objects.get(id=request.POST['conversation'])
-            m = Messages(
-                text=request.POST['text'],
-                sender=request.user,
+            c = Conversation.objects.get(
+                id=request.GET['conversation']
+            )
+            messages = Messages.objects.filter(
                 conversation=c
             )
+            s = MessageSerializer(messages, many=True)
+            return Response(s.data)
+        else:
+            return Response(
+                s.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+    def post(self, request):
+        print('post', request.data)
+        s = AddMessageSerializer(
+            data=request.data,
+            context={
+                'user': request.user 
+            })
+        if s.is_valid():
+            m = s.save()
+            m.sender = request.user
             m.save()
             r = {
                 'message': 'Your message saved!'
             }
-            return JsonResponse(r)
+            return Response(r)
         else:
+            return Response({
+                'errors': s.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        print(request.data)
+        s = UpdateMessageSerializer(
+            instance=Messages.objects.get(id=request.data['id']),
+            data=request.data,
+            
+        )
+        if s.is_valid():
+            s.save()
+            return Response(
+                {
+                    "message": "Your message updated successfully"
+                }
+            )
+        else:
+            return Response(
+                {
+                    "errors": s.errors
+                }
+            )
+
+def login_required(function):
+    def wrapper(r):
+        if not r.user.is_authenticated:
             return JsonResponse({
-                'message': 'Your request is not valid'
-            }, status=400)
+                'message': 'Send login request'
+            }, status=401)
+        else:
+            return function(r)
+    return wrapper
+
+
+@login_required
+def add_message(request):
+   
+    s = AddMessageSerializer(
+        data=request.POST,
+        context={
+            'user': request.user 
+        })
+    if s.is_valid():
+        s.save()
+        r = {
+            'message': 'Your message saved!'
+        }
+        return JsonResponse(r)
+    else:
+        print(s.errors)
+        return JsonResponse({
+            'errors': s.errors
+        }, status=400)
 
 
 
-class MessageSerializer(serializers.ModelSerializer):
-    
-    sender = UserSerializer()
-
-    class Meta:
-        model = Messages
-        fields = '__all__'
 
 
 
@@ -98,42 +151,11 @@ def message_list(request):
     return JsonResponse(d)
 
 
-
-
-class ConversationSerializer(serializers.ModelSerializer):
-
-    members = UserSerializer(many=True)
-
-    class Meta:
-        model = Conversation
-        fields = '__all__'
-
-
 def conversation_list(request):
-    s = ConversationSerializer(Conversation.objects.all(), many=True)
-    print(s.data)
-    # conversations = []
-    # for c in Conversation.objects.all():
-    #     conversations.append(ConversationSerializer(c).data)
-    #     members = []
-    #     for m in c.members.all():
-
-    #         members.append(
-    #             {
-    #                 'id': m.id,
-    #                 'firstname': m.first_name,
-    #                 'lastname': m.last_name
-    #             }
-    #         )
-    #     conversations.append(
-    #         {
-    #             'id': c.id,
-    #             'name': c.name,
-    #             'is_group': c.is_group,
-    #             'members': members
-    #         }
-    #     )
-
+    s = ConversationSerializer(
+        Conversation.objects.all(),
+        many=True
+    )
     return JsonResponse({
         'conversations': s.data
     })
